@@ -3,6 +3,7 @@ FROM python:3.4
 RUN groupadd -r uwsgi && useradd -r -g uwsgi uwsgi
 RUN pip install -U pip
 RUN pip install Flask
+RUN pip install requests
 WORKDIR /app
 COPY app /app
 COPY cmd.sh /
