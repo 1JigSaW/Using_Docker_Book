@@ -4,6 +4,7 @@ RUN groupadd -r uwsgi && useradd -r -g uwsgi uwsgi
 RUN pip install -U pip
 RUN pip install Flask
 RUN pip install requests
+RUN pip install redis
 WORKDIR /app
 COPY app /app
 COPY cmd.sh /
