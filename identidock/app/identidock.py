@@ -12,22 +12,23 @@ default_name = 'Jig Saw'
 def mainpage():
 	name = default_name
 	if request.method == 'POST':
-		name = request.form['name']
-		salted_name = salt + name
-		name_hash = hashlib.sha256(salted_name.encode()).hexdigest()
-		header = '<html><head><title>Identidock</title></head><body>'
-		body = '''<form mrthod="POST">
-			Hello <input type="text" name="name" value="{}">
-			<input type="submit" value="submit">
-			</form>
-			<p>You look like a:
-			<img src="/monster/{1}"/>
-			'''.format(name, name_hash)
-		footer = '</body></html>'
-		return header + body + footer
+		name = html.escape(request.form['name'], quote=True)
+	salted_name = salt + name
+	name_hash = hashlib.sha256(salted_name.encode()).hexdigest()
+	header = '<html><head><title>Identidock</title></head><body>'
+	body = '''<form mrthod="POST">
+		Hello <input type="text" name="name" value="{}">
+		<input type="submit" value="submit">
+		</form>
+		<p>You look like a:
+		<img src="/monster/{1}"/>
+		'''.format(name, name_hash)
+	footer = '</body></html>'
+	return header + body + footer
 
 @app.route('/monster/<name>')
 def get_identicon(name):
+	name = html/escape(name, quote=True)
 	image = cache.get(name)
 	if image is None:
 		print("Cache miss", flush=True)
