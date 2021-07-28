@@ -1,0 +1,208 @@
+500  docker run debian echo "Hello worlds"
+  501  docker run debian echo "Hello world"
+  502  docker run -i -t debian /bin/bash
+  503  docker run -h CONTAINER -i -t debian /bin/bash
+  504  docker run -h CONTAINER -i -t debian /bin/bash
+  505  docker ps
+  506  docker ps -a
+  507  docker rm big_leavitt
+  508  docker rm -v $(docker ps -aq -f status=exited)
+  501  docker ps
+  502  docker inspect 3207
+  503  docker inspect big_leavitt
+  504  docker inspect big_leavitt | grep IP
+  505  docker inspect big_leavitt | grep IPAddress
+  506  docker inspect --format {{.NetworkSettings.IPAddress}} stupefied_turing
+  507  docker inspect --format {{.NetworkSettings.IPAddress}} big_leavitt
+  508  docker diff big_leavitt
+  509  docker logs big_leavitt
+  510  docker run debian -rm -i -t /bin/bash
+  511  docker run -rm -i -t debian /bin/bash
+  512  docker run debian --rm -i -t /bin/bash
+  513  docker run -it --name cowsay --hostname cowsay debian bash
+  514  docker commit cowsay test/cowsayimage
+  515  docker images
+  516  docker run test/cowsayimage -t -i /usr/games/fortune | /usr/games/cowsay
+  517  docker run test/cowsayimage -i -t /usr/games/fortune | /usr/games/cowsay
+  518  docker run -i -t test/cowsayimage  /usr/games/fortune | /usr/games/cowsay
+  519  docker run -i -t test/cowsayimage  /usr/games/fortune | /usr/games/cowsay
+  520  docker run -i -t test/cowsayimage  /bin/bash
+  521  docker run -i -t test/cowsayimage  /usr/games/fortune
+  522  docker run -i -t test/cowsayimage  /usr/games/fortune
+  523  docker run  test/cowsayimage  /usr/games/fortune
+  524  docker run  test/cowsayimage  /usr/games/cowsay "MOOOO"
+  5  docker login
+  536  docker build -t mkoltsov/cowsay
+  537  docker build -t mkoltsov/cowsay .
+  538  docker push mkoltsov/cowsay
+  539  docker build -t mkoltsov/cowsay:stable .
+  docker run --name myredis -d redis
+  docker run --rm -it --link myredis:redis redis /bin/bash
+   redis-cli -h redis -p 6379
+   docker history debian:latest
+   docker build --no-cache .
+   docker run -d -p 8000:80 nginx
+   $ ID=$(docker run -d -P nginx)
+$ docker port $ID 80
+0.0.0.0:32771
+$ curl localhost:32771
+docker run -d --name myredis redis
+docker run --link myredis:redis debian env
+docker run -it --name container-test -h CONTAINER -v /data debian /bin/bash
+docker inspect -f {{.Mounts}} container-test
+docker run -v /home/adrian/data:/data debian ls /data
+docker run -v /home/adrian/data:/data debian ls /data
+docker run -it -h NEWCONTAINER --volumes-from container-test debian /bin/bash
+docker run --name dbdata postgres echo "Data-only container for postgres"
+docker run -d --volumes-from dbdata --name db1 postgres
+
+ID=$(docker run -d debian sh -c "while true; do sleep 1; done;")
+$ docker exec $ID echo "Hello"
+
+ ID=$(docker run -d debian sh -c "while true; do echo 'tick'; sleep 1; done;")
+$ docker attach $ID
+
+ID=$(docker run -d redis touch /new-file)
+$ docker commit -a "Joe Bloggs" -m "Comment" $ID commit:test
+
+ docker save -o /tmp/redis.tar redis:latest
+$ docker rmi redis:latest
+
+$ docker load -i /tmp/redis.tar
+$ docker images redis
+
+docker-compose up -d --force-recreate
+docker run -e ENV=UNIT identidock
+docker run --rm --privileged -t -i -e LOG=file jpetazzo/dind
+docker run busybox echo "Hello New World!"
+
+docker run -v /var/run/docker.sock:/var/run/docker.sock \
+        identijenk sudo docker ps
+
+sudo docker-compose $COMPOSE_ARGS rm --force -v
+
+#Default compose args
+COMPOSE_ARGS=" -f jenkins.yml -p jenkins "
+
+#Make sure old containers are gone
+sudo docker-compose $COMPOSE_ARGS stop
+sudo docker-compose $COMPOSE_ARGS rm --force -v
+
+#build the system
+sudo docker-compose $COMPOSE_ARGS build --no-cache
+sudo docker-compose $COMPOSE_ARGS up -d
+
+#Run unit tests
+sudo docker-compose $COMPOSE_ARGS run --no-deps --rm -e ENV=UNIT identidock
+ERR=$?
+
+#Run system test if unit tests passed
+if [ $ERR -eq 0 ]; then
+  IP=$(sudo docker inspect -f {{.NetworkSettings.IPAddress}} \
+          jenkins_identidock_1)
+  CODE=$(curl -sL -w "%{http_code}" $IP:9090/monster/bla -o /dev/null) || true
+  if [ $CODE -eq 200 ]; then
+    echo "Test passed - Tagging"
+    HASH=$(git rev-parse --short HEAD) 
+    sudo docker tag -f jenkins_identidock amouat/identidock:$HASH 
+    sudo docker tag -f jenkins_identidock amouat/identidock:newest 
+    echo "Pushing"
+    sudo docker login -e joe@bloggs.com -u jbloggs -p jbloggs1233
+    sudo docker push amouat/identidock:$HASH 
+    sudo docker push amouat/identidock:newest 
+  else
+    echo "Site returned " $CODE
+    ERR=1
+  fi
+fi
+
+#Pull down the system
+sudo docker-compose $COMPOSE_ARGS stop
+sudo docker-compose $COMPOSE_ARGS rm --force -v
+
+return $ERR
+#find all tags
+docker images --no-trunc | grep \
+    $(docker inspect -f {{.Id}} amouat/identidock:newest)
+#back up Jenkins
+docker run --volumes-from jenkins-data -v $PWD:/backup \
+           debian tar -zcvf /backup/jenkins-data.tar.gz /var/jenkins_home    
+
+           One common approach is sometimes called blue/green deployment. Say we want to update an existing production service (let’s call it the “blue” version) to new a version (let’s call it the “green” version). Rather than just replace the blue version with the green version, we can run them in tandem for a given time period. Once the green version is up and running, we flip the switch to start routing traffic to it. We then monitor the system for any unexpected changes in behavior, such as increased error rates or latency. If we’re not happy with the new version, all we have to do is flip the switch back to return the blue version to production. Once we’re satisfied things are working correctly, we can turn off the blue version.
+Other methods follow a similar principle—both the old and new versions should run in tandem. In A/B, or multivariate testing, two (or more) versions of a service are run together for a test period, with users randomly split between two. Certain statistics are monitored, and based on the results at the end of testing, one of the versions is kept. In ramped deployment, the new version of a service is only made available to a small subset of users. If these users find no problems, the new version will be progressively made available to more and more users. In shadowing, both versions of the service are run for all requests, but only the results from the old, stable version are used. By comparing the results from the old version and the proposed new version, it is possible to ensure the new version has identical behavior to the old version (or differs in an expected and positive way). Shadowing is particularly useful when testing new versions that do not have functional changes such as performance improvements.
+
+ docker-compose -f prod.yml stop
+...
+$ docker-compose -f prod.yml rm
+$ export COMPOSE_FILE=prod.yml
+$ docker-compose up -d
+docker run --name logtest debian sh -c 'echo "stdout"; echo "stderr" >&2'
+docker logs -t logtest
+docker run -d --name streamtest debian sh -c 'while true; do echo "tick"; sleep 1; done;'
+#logs streaming
+docker logs -f streamtest
+#streaming through Remote API
+curl -i --cacert ~/.docker/machine/certs/ca.pem --cert ~/.docker/machine/certs/ca.pem --key ~/.docker/machine/certs/key.pem "https://localhost:2376/containers/ $(docker ps -lq)/logs?stderr=1&stdout=1"
+#run the yes app inside of the container
+docker run -d debian yes
+#use data container for logs
+ docker run -d --name tolog-logger \
+             --volumes-from tolog \
+             debian tail -F
+/dev/log/*
+#USING SYSLOG
+ID=$(docker run -d --log-driver=syslog debian  sh -c 'i=0; while true; do i=$((i+1)); echo "docker $i"; sleep 1; done;')
+#Monitorung w/docker tools
+docker stats logging_logspout_1
+#Monitor all running containers
+docker stats \
+   $(docker inspect -f {{.Name}} $(docker ps -q))
+#Monitor w/Cadvisor
+docker run -d \
+  --name cadvisor \
+  -v /:/rootfs:ro \
+  -v /var/run:/var/run:rw \
+  -v /sys:/sys:ro \
+  -v /var/lib/docker/:/var/lib/docker:ro \
+  -p 8080:8080 \
+  google/cadvisor:latest   
+#The following gets the image IDs for all running images
+  docker inspect -f "{{.Image}}" $(docker ps -q)
+  docker images --no-trunc | \
+    grep $(docker inspect -f "-e {{.Image}}" $(docker ps -q))
+#To get a list of all images and their base or intermediate images (use --no-trunc for full IDs)
+docker inspect -f "{{.Image}}" $(docker ps -q) | \
+    xargs -L 1 docker history -q    
+docker images | \
+   grep $(docker inspect -f "{{.Image}}" $(docker ps -q) | \
+          xargs -L 1 docker history -q | sed "s/^/\-e /")
+$ docker run --name nc-test -d amouat/network-utils nc -l 5001 1
+f57269e2805cf3305e41303eafefaba9bf8d996d87353b10d0ca577acc731186
+$ docker run \
+   -e IP=$(docker inspect -f {{.NetworkSettings.IPAddress}} nc-test) \
+   amouat/network-utils sh -c 'echo -n "hello" | nc -v $IP 5001' 2
+Connection to 172.17.0.3 5001 port [tcp/*] succeeded!
+$ docker logs nc-test
+hello
+#allowing traffic from the given interface
+docker run -p 87.245.78.43:8080:8080 -d myimage              
+#Limit the memory that's available for a container
+docker run -m 128m --memory-swap 128m amouat/stress \
+     stress --vm 1 --vm-bytes 127m -t 5s
+docker run -m 128m --memory-swap 128m amouat/stress \
+     stress --vm 1 --vm-bytes 130m -t 5s     
+ocker run -m 128m amouat/stress \
+     stress --vm 1 --vm-bytes 255m -t 5s
+#Limit the available CPU          
+docker run -d --name load1 -c 2048 amouat/stress
+docker run -d --name load2 amouat/stress
+docker run -d --name load3 -c 512 amouat/stress
+docker run -d --name load4 -c 512 amouat/stress
+docker stats $(docker inspect -f {{.Name}} $(docker ps -q))
+#USE CFS
+docker run -d --cpu-period=50000 --cpu-quota=25000 myimage
+docker run -d --restart=on-failure:10 my-flaky-image
+#MAKE container read-only
+docker run --read-only debian touch x
+#Read-only volumes
+docker run -v $PWD:/pwd:ro debian touch /pwd/x
